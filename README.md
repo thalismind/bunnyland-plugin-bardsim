@@ -1,7 +1,6 @@
 # Bunnyland Bardsim
 
-Out-of-tree [Bunnyland](https://github.com/thalismind/bunnyland-server) plugin: a
-Sims-4-expansion-sized **music & performance** pack. Characters pick up instruments, play
+Out-of-tree [Bunnyland](https://github.com/thalismind/bunnyland-server) plugin: an expansion-pack-sized **music & performance** pack. Characters pick up instruments, play
 songs they know, fill the room with an audible tune, lift (or sink) the mood of everyone
 listening, and — when there is an audience — earn tips.
 
