@@ -22,7 +22,7 @@ from .events import PerformedEvent, SongLearnedEvent
 from .fragments import bardsim_fragments
 from .install import install_bardsim
 
-PLUGIN_ID = "bunnyland_bardsim"
+PLUGIN_ID = "bunnyland.bardsim"
 
 
 def plugin() -> Plugin:
