@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from bunnyland.core import (
     CharacterComponent,
     ContainmentMode,
@@ -23,10 +24,23 @@ from bunnyland_bardsim import (
     spawn_musician,
 )
 from bunnyland_bardsim.commands import PerformHandler
+from bunnyland_bardsim.songs import MOOD_DELTAS, song_mood
 
 EPOCH = 100
 JIG = "a merry harvest jig"
 LAMENT = "lament for the fallen"
+
+#: One example song per mood, spanning the whole classified repertoire.
+MOOD_SONGS = (
+    "a joyful festival reel",  # uplifting
+    "the iron battle march",  # rousing
+    "a moonlight serenade for my beloved",  # romantic
+    "the drunken jester's riddle",  # comic
+    "the road home",  # wistful
+    "lament for the fallen",  # somber
+    "a haunting midnight air",  # eerie
+    "a gentle cradle hush",  # lullaby
+)
 
 
 def _listener(world, room, name):
@@ -64,6 +78,30 @@ def _stage(song=JIG):
     lute = spawn_lute(actor.world)
     performer.add_relationship(Contains(mode=ContainmentMode.INVENTORY), lute.id)
     return actor, room, performer, lute
+
+
+@pytest.mark.parametrize("song", MOOD_SONGS)
+def test_each_song_mood_shifts_listener_valence_in_its_direction(song):
+    # Every classified mood should move a listener's valence the way its delta promises,
+    # end to end through perform -> noise -> consequence.
+    actor = WorldActor()
+    room = spawn_entity(actor.world, [RoomComponent(title="Square")])
+    performer = spawn_musician(actor.world, name="Lira", room_id=room.id, songs=(song,))
+    lute = spawn_lute(actor.world)
+    performer.add_relationship(Contains(mode=ContainmentMode.INVENTORY), lute.id)
+    listener = _listener(actor.world, room, "Bo")
+    _perform(actor, performer, lute, song)
+
+    PerformanceConsequence().process(actor.world, EPOCH)
+
+    expected = MOOD_DELTAS[song_mood(song)].valence
+    valence = listener.get_component(AffectComponent).current.valence
+    if expected > 0:
+        assert valence > 0
+    elif expected < 0:
+        assert valence < 0
+    else:
+        assert valence == 0
 
 
 def test_uplifting_performance_lifts_listener_mood():
