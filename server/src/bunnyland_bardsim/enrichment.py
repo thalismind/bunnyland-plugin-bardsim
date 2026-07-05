@@ -22,6 +22,7 @@ from bunnyland.core.events import (
 from bunnyland.core.world_actor import WorldActor
 
 from .components import InstrumentComponent, RepertoireComponent, TipJarComponent
+from .reputation import aspire_to_renown
 
 #: Words that mark a generated character as a musician who should know some songs.
 MUSICIAN_TERMS = (
@@ -116,6 +117,8 @@ class BardWorldgenHook:
             replace_component(entity, RepertoireComponent(songs=STARTER_SONGS))
             if not entity.has_component(TipJarComponent):
                 replace_component(entity, TipJarComponent())
+            # A generated musician aspires to fame: route the goal through core persona/goals.
+            aspire_to_renown(entity)
 
     def _on_object(self, event: ObjectGeneratedEvent) -> None:
         entity = self._entity(event.entity_id)

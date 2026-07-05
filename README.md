@@ -4,10 +4,17 @@ Out-of-tree [Bunnyland](https://github.com/thalismind/bunnyland-server) plugin: 
 songs they know, fill the room with an audible tune, lift (or sink) the mood of everyone
 listening, and — when there is an audience — earn tips.
 
+**v2** adds the *venues, gigs & reputation* headline: open a room as a named venue, play a
+**gig** there to build a shared **reputation** (renown), form **ensembles** (a typed
+`BandmateOf` edge so a band draws more renown than a lone busker), and **compose** original
+songs you own (a typed `Composed` edge) and can perform at once.
+
 Everything reuses the stock server's own subsystems: performances become **noise** the core
 hearing pipeline delivers, mood changes flow through **`AffectComponent`**, tips scale with
-each listener's **`SocialBond`**, and worldgen tagging happens through the standard
-generation-event hooks.
+each listener's **`SocialBond`**, the become-renowned ambition rides the core persona/goals
+`GoalComponent`, a famous act registers a core **storyteller** incident, and worldgen tagging
+happens through the standard generation-event hooks. Synergy partners (festival, museum,
+storyteller) are **recommended, never required** — bardsim runs standalone.
 
 This repo intentionally keeps all bard work outside the main `bunnyland-server` repo.
 
@@ -30,9 +37,29 @@ The plugin exposes `bunnyland_bardsim.bunnyland_plugins()` and contributes:
 - `bardsim_fragments` - renders what is currently playing in the room, nearby instruments,
   and (first person) your own repertoire.
 - `BardWorldgenHook` - tags generated musicians with a repertoire and generated instruments
-  with `InstrumentComponent`.
-- `perform` and `learn-song` - verbs for the holder (human or AI).
+  with `InstrumentComponent`, and gives a generated musician the become-renowned goal.
 - `spawn_lute`, `spawn_fiddle`, `spawn_drum`, `spawn_musician` - spawn factories.
+
+### v2 surfaces
+
+- `VenueComponent` - marks a room as a performance venue with a name and prestige tier (1-5).
+- `GigComponent` / `GigConsequence` - a gig seeds a scored performance; the consequence grants
+  renown (scaled by venue prestige, crowd size, and ensemble), publishes a `ContestEntry`, and
+  registers a storyteller incident when a performer becomes famous — each gig scored once.
+- `CompositionComponent` / `Composed` (edge) - an original song, owned by its author.
+- `BandmateOf` (edge) - a symmetric band-membership tie between two musicians.
+- `Reputation` - the shared performing-standing connector surface (renown → unknown…renowned).
+- `ContestEntryComponent` - a published gig entry a festival pack can host as a competition.
+- `reputation_fragments` / `venue_fragments` / `ensemble_fragments` / `composition_fragments`.
+
+### Verbs
+
+- `perform` - play a known song on a held instrument, filling the room with an audible tune.
+- `learn-song` - add a song to your repertoire.
+- `open-venue` - turn the room you are in into a named performance venue (prestige 1-5).
+- `perform-gig` - play a known song at a venue to build your reputation.
+- `form-ensemble` - band together with another musician under a shared ensemble name.
+- `compose-song` - write an original song, learn it, and add it to your body of work.
 
 ## Running
 

@@ -232,3 +232,55 @@ def test_learn_song_rejects_already_known_song():
 
     assert not result.ok
     assert result.reason == "you already know that song"
+
+
+def test_learn_song_rejects_invalid_character_id():
+    actor, _room, _musician = _world_with_musician()
+
+    result = LearnSongHandler().execute(
+        _ctx(actor), _cmd("???", "learn-song", {"song": "a new tune"})
+    )
+
+    assert not result.ok
+    assert result.reason == "invalid character id"
+
+
+def test_perform_uses_a_fallback_name_without_an_identity():
+    actor = WorldActor()
+    room = spawn_entity(actor.world, [RoomComponent(title="Corner")])
+    faceless = spawn_entity(
+        actor.world, [CharacterComponent(), RepertoireComponent(songs=(SONG,))]
+    )
+    room.add_relationship(Contains(mode=ContainmentMode.ROOM_CONTENT), faceless.id)
+    lute = spawn_lute(actor.world)
+    _hold(faceless, lute)
+
+    PerformHandler().execute(
+        _ctx(actor), _cmd(faceless.id, "perform", {"item_id": str(lute.id), "song": SONG})
+    )
+
+    performances = list(
+        actor.world.query().with_all([PerformanceNoiseComponent]).execute_entities()
+    )
+    assert performances[0].get_component(PerformanceNoiseComponent).performer_name == "someone"
+
+
+def test_perform_rejects_when_there_is_no_room():
+    actor = WorldActor()
+    roamer = spawn_entity(
+        actor.world,
+        [
+            IdentityComponent(name="Roamer", kind="character"),
+            CharacterComponent(),
+            RepertoireComponent(songs=(SONG,)),
+        ],
+    )  # deliberately uncontained -- in no room
+    lute = spawn_lute(actor.world)
+    _hold(roamer, lute)
+
+    result = PerformHandler().execute(
+        _ctx(actor), _cmd(roamer.id, "perform", {"item_id": str(lute.id), "song": SONG})
+    )
+
+    assert not result.ok
+    assert result.reason == "there is no room to perform in"
