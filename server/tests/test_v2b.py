@@ -291,8 +291,10 @@ def test_room_of_guards_and_depth_limit():
     assert room_of(actor.world, uncontained.id) is None  # no parent
 
     # A containment chain deeper than the guard, with no room at the top, returns None.
-    chain = [spawn_entity(actor.world, [IdentityComponent(name=f"box{i}", kind="item")])
-             for i in range(10)]
+    chain = [
+        spawn_entity(actor.world, [IdentityComponent(name=f"box{i}", kind="item")])
+        for i in range(10)
+    ]
     for outer, inner in zip(chain, chain[1:], strict=False):
         outer.add_relationship(Contains(mode=ContainmentMode.INVENTORY), inner.id)
     assert room_of(actor.world, chain[-1].id) is None

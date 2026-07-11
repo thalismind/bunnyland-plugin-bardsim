@@ -27,7 +27,7 @@ from .composing import (
     composition_fragments,
 )
 from .connectors import ContestEntryComponent, Reputation
-from .enrichment import BardWorldgenHook
+from .enrichment import BardGenerationEnricher, BardGenerationNormalizer
 from .ensembles import (
     FORM_ENSEMBLE_DEF,
     BandmateOf,
@@ -65,6 +65,7 @@ def plugin() -> Plugin:
         # ContestEntry gigs publish; a museum can contribute donor renown; the storyteller
         # paces the fame incidents a famous act registers.
         dependencies=DependencyContribution(
+            requires=("bunnyland.persona",),
             recommends=(
                 "bunnyland.festivalsim",
                 "bunnyland.museumsim",
@@ -119,7 +120,8 @@ def plugin() -> Plugin:
                 composition_fragments,
                 reputation_fragments,
             ),
-            worldgen_hooks=(BardWorldgenHook,),
+            intent_normalizers=(BardGenerationNormalizer(),),
+            generation_enrichers=(BardGenerationEnricher(),),
         ),
     )
 

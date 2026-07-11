@@ -26,9 +26,7 @@ from bunnyland_bardsim.prefabs import (
 def test_catalogue_is_internally_consistent():
     # The flat kind tuple, the family grouping, and the named-spawner registry must all
     # describe exactly the same instruments.
-    from_families = tuple(
-        kind for kinds in INSTRUMENT_FAMILIES.values() for kind in kinds
-    )
+    from_families = tuple(kind for kinds in INSTRUMENT_FAMILIES.values() for kind in kinds)
     assert INSTRUMENT_KINDS == from_families
     assert set(INSTRUMENT_SPAWNERS) == set(INSTRUMENT_KINDS)
     # No duplicate kinds across families.

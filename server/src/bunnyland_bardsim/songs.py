@@ -19,7 +19,7 @@ payout is fully reproducible from world state.
 from __future__ import annotations
 
 from bunnyland.core.components import AffectDelta
-from bunnyland.mechanics.social import SocialBond
+from bunnyland.foundation.social.mechanics import SocialBond
 
 UPLIFTING = "uplifting"
 ROUSING = "rousing"

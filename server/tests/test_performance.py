@@ -15,7 +15,7 @@ from bunnyland.core.commands import CommandCost, Lane, build_submitted_command
 from bunnyland.core.components import AffectComponent, PerceptionComponent
 from bunnyland.core.consequences import HearingConsequence
 from bunnyland.core.handlers import HandlerContext
-from bunnyland.mechanics.social import adjust_bond
+from bunnyland.foundation.social.mechanics import adjust_bond
 
 from bunnyland_bardsim import (
     PerformanceConsequence,

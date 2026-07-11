@@ -238,8 +238,9 @@ INSTRUMENT_SPAWNERS: dict[str, Callable[..., Entity]] = {
 }
 
 
-def spawn_musician(world: World, *, name: str = "busker", room_id=None, songs=DEFAULT_SONGS
-                   ) -> Entity:
+def spawn_musician(
+    world: World, *, name: str = "busker", room_id=None, songs=DEFAULT_SONGS
+) -> Entity:
     """Spawn a musician character who knows ``songs`` and has an empty tip jar."""
     character = spawn_entity(
         world,

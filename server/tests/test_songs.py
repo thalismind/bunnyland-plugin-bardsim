@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from bunnyland.mechanics.social import SocialBond
+from bunnyland.foundation.social.mechanics import SocialBond
 
 from bunnyland_bardsim.songs import (
     COMIC,

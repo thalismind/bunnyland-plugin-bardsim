@@ -14,8 +14,8 @@ from bunnyland.core import (
 from bunnyland.core.commands import CommandCost, Lane, build_submitted_command
 from bunnyland.core.ecs import parse_entity_id
 from bunnyland.core.handlers import HandlerContext
-from bunnyland.mechanics.persona import GoalComponent
-from bunnyland.mechanics.storyteller import IncidentComponent, IncidentStartedEvent
+from bunnyland.foundation.persona.mechanics import GoalComponent
+from bunnyland.foundation.storyteller.mechanics import IncidentComponent, IncidentStartedEvent
 
 from bunnyland_bardsim.composing import (
     COMPOSE_RENOWN,
@@ -113,7 +113,10 @@ def _venue_setup(prestige=1):
     lute = spawn_lute(actor.world)
     _hold(musician, lute)
     _run(
-        OpenVenueHandler, actor, musician, "open-venue",
+        OpenVenueHandler,
+        actor,
+        musician,
+        "open-venue",
         {"name": "The Rest", "prestige": prestige},
     )
     return actor, room, musician, lute
@@ -131,7 +134,10 @@ def test_form_ensemble_links_both_musicians():
     bram = spawn_musician(actor.world, name="Bram", room_id=room.id)
 
     result = _run(
-        FormEnsembleHandler, actor, lira, "form-ensemble",
+        FormEnsembleHandler,
+        actor,
+        lira,
+        "form-ensemble",
         {"member_id": str(bram.id), "band": "The Wanderers"},
     )
 
@@ -166,17 +172,21 @@ def test_form_ensemble_rejections():
     )
     assert not_musician.reason == "that is not a musician"
 
-    no_name = _run(
-        FormEnsembleHandler, actor, lira, "form-ensemble", {"member_id": str(bram.id)}
-    )
+    no_name = _run(FormEnsembleHandler, actor, lira, "form-ensemble", {"member_id": str(bram.id)})
     assert no_name.reason == "you need to name the ensemble"
 
     _run(
-        FormEnsembleHandler, actor, lira, "form-ensemble",
+        FormEnsembleHandler,
+        actor,
+        lira,
+        "form-ensemble",
         {"member_id": str(bram.id), "band": "Duo"},
     )
     again = _run(
-        FormEnsembleHandler, actor, lira, "form-ensemble",
+        FormEnsembleHandler,
+        actor,
+        lira,
+        "form-ensemble",
         {"member_id": str(bram.id), "band": "Duo"},
     )
     assert again.reason == "you already share an ensemble"
@@ -283,7 +293,10 @@ def test_perform_gig_seeds_a_scored_gig():
     actor, room, musician, lute = _venue_setup(prestige=2)
 
     result = _run(
-        PerformGigHandler, actor, musician, "perform-gig",
+        PerformGigHandler,
+        actor,
+        musician,
+        "perform-gig",
         {"item_id": str(lute.id), "song": SONG},
     )
 
@@ -302,30 +315,35 @@ def test_perform_gig_rejections():
     bad_item = _run(PerformGigHandler, actor, musician, "perform-gig", {"item_id": "nope"})
     assert bad_item.reason == "invalid item id"
 
-    missing_item = _run(
-        PerformGigHandler, actor, musician, "perform-gig", {"item_id": "ghost_1"}
-    )
+    missing_item = _run(PerformGigHandler, actor, musician, "perform-gig", {"item_id": "ghost_1"})
     assert missing_item.reason == "item does not exist"
 
     not_held = _run(
-        PerformGigHandler, actor, musician, "perform-gig",
+        PerformGigHandler,
+        actor,
+        musician,
+        "perform-gig",
         {"item_id": str(loose.id), "song": SONG},
     )
     assert not_held.reason == "you are not holding that instrument"
 
     not_instrument = _run(
-        PerformGigHandler, actor, musician, "perform-gig",
+        PerformGigHandler,
+        actor,
+        musician,
+        "perform-gig",
         {"item_id": str(rock.id), "song": SONG},
     )
     assert not_instrument.reason == "that is not an instrument"
 
-    no_song = _run(
-        PerformGigHandler, actor, musician, "perform-gig", {"item_id": str(lute.id)}
-    )
+    no_song = _run(PerformGigHandler, actor, musician, "perform-gig", {"item_id": str(lute.id)})
     assert no_song.reason == "you need to name a song to perform"
 
     unknown = _run(
-        PerformGigHandler, actor, musician, "perform-gig",
+        PerformGigHandler,
+        actor,
+        musician,
+        "perform-gig",
         {"item_id": str(lute.id), "song": "a song i never learned"},
     )
     assert unknown.reason == "you do not know that song"
@@ -339,7 +357,10 @@ def test_perform_gig_rejects_off_venue_and_roomless():
     _hold(musician, lute)
 
     off_venue = _run(
-        PerformGigHandler, actor, musician, "perform-gig",
+        PerformGigHandler,
+        actor,
+        musician,
+        "perform-gig",
         {"item_id": str(lute.id), "song": SONG},
     )
     assert off_venue.reason == "you can only play a gig at a venue"
@@ -356,7 +377,10 @@ def test_perform_gig_rejects_off_venue_and_roomless():
     stray_lute = spawn_lute(actor.world)
     _hold(stray, stray_lute)
     no_room = _run(
-        PerformGigHandler, actor, stray, "perform-gig",
+        PerformGigHandler,
+        actor,
+        stray,
+        "perform-gig",
         {"item_id": str(stray_lute.id), "song": SONG},
     )
     assert no_room.reason == "there is no room to perform in"
@@ -366,7 +390,10 @@ def test_gig_consequence_scores_once_and_publishes_a_contest_entry():
     actor, room, musician, lute = _venue_setup(prestige=3)
     audience = spawn_musician(actor.world, name="Fan", room_id=room.id)  # a listener
     _run(
-        PerformGigHandler, actor, musician, "perform-gig",
+        PerformGigHandler,
+        actor,
+        musician,
+        "perform-gig",
         {"item_id": str(lute.id), "song": SONG},
     )
 
@@ -386,7 +413,10 @@ def test_gig_consequence_scores_once_and_publishes_a_contest_entry():
 def test_gig_consequence_is_idempotent():
     actor, room, musician, lute = _venue_setup(prestige=2)
     _run(
-        PerformGigHandler, actor, musician, "perform-gig",
+        PerformGigHandler,
+        actor,
+        musician,
+        "perform-gig",
         {"item_id": str(lute.id), "song": SONG},
     )
     conseq = GigConsequence()
@@ -403,11 +433,17 @@ def test_gig_shares_renown_with_present_bandmates():
     actor, room, musician, lute = _venue_setup(prestige=4)
     bram = spawn_musician(actor.world, name="Bram", room_id=room.id)
     _run(
-        FormEnsembleHandler, actor, musician, "form-ensemble",
+        FormEnsembleHandler,
+        actor,
+        musician,
+        "form-ensemble",
         {"member_id": str(bram.id), "band": "The Wanderers"},
     )
     _run(
-        PerformGigHandler, actor, musician, "perform-gig",
+        PerformGigHandler,
+        actor,
+        musician,
+        "perform-gig",
         {"item_id": str(lute.id), "song": SONG},
     )
 
@@ -427,7 +463,10 @@ def test_a_famous_act_registers_a_storyteller_incident_once():
 
     # First gig: crosses fame -> a storyteller incident is registered.
     _run(
-        PerformGigHandler, actor, musician, "perform-gig",
+        PerformGigHandler,
+        actor,
+        musician,
+        "perform-gig",
         {"item_id": str(lute.id), "song": SONG},
     )
     first = conseq.process(actor.world, 10)
@@ -439,7 +478,10 @@ def test_a_famous_act_registers_a_storyteller_incident_once():
 
     # A second gig by the same star does not double-fete.
     _run(
-        PerformGigHandler, actor, musician, "perform-gig",
+        PerformGigHandler,
+        actor,
+        musician,
+        "perform-gig",
         {"item_id": str(lute.id), "song": SONG},
     )
     second = conseq.process(actor.world, 20)

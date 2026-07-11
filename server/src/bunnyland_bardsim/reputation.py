@@ -17,7 +17,7 @@ from dataclasses import replace
 from bunnyland.core import contents
 from bunnyland.core.components import IdentityComponent
 from bunnyland.core.ecs import replace_component
-from bunnyland.mechanics.persona import GoalComponent
+from bunnyland.foundation.persona.mechanics import GoalComponent
 from relics import Entity, EntityId, World
 
 from .connectors import Reputation
@@ -67,9 +67,7 @@ def grant_renown(world: World, character_id: EntityId, amount: int) -> Reputatio
         return None
     character = world.get_entity(character_id)
     current = (
-        character.get_component(Reputation)
-        if character.has_component(Reputation)
-        else Reputation()
+        character.get_component(Reputation) if character.has_component(Reputation) else Reputation()
     )
     updated = replace(current, renown=max(0, current.renown + amount))
     replace_component(character, updated)

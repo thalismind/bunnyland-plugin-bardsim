@@ -27,7 +27,7 @@ from .connectors import (
     contest_entries,
     external_reputation_bonus,
 )
-from .enrichment import BardWorldgenHook
+from .enrichment import BardGenerationEnricher
 from .ensembles import (
     BandmateOf,
     EnsembleFormedEvent,
@@ -86,7 +86,7 @@ __all__ = [
     "PLUGIN_ID",
     "RENOWNED_GOAL",
     "BandmateOf",
-    "BardWorldgenHook",
+    "BardGenerationEnricher",
     "Composed",
     "ComposeSongHandler",
     "CompositionComponent",

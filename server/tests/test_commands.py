@@ -248,9 +248,7 @@ def test_learn_song_rejects_invalid_character_id():
 def test_perform_uses_a_fallback_name_without_an_identity():
     actor = WorldActor()
     room = spawn_entity(actor.world, [RoomComponent(title="Corner")])
-    faceless = spawn_entity(
-        actor.world, [CharacterComponent(), RepertoireComponent(songs=(SONG,))]
-    )
+    faceless = spawn_entity(actor.world, [CharacterComponent(), RepertoireComponent(songs=(SONG,))])
     room.add_relationship(Contains(mode=ContainmentMode.ROOM_CONTENT), faceless.id)
     lute = spawn_lute(actor.world)
     _hold(faceless, lute)

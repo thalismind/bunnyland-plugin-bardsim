@@ -23,8 +23,8 @@ from bunnyland.core import contents
 from bunnyland.core.components import AffectComponent, CharacterComponent
 from bunnyland.core.ecs import parse_entity_id, replace_component
 from bunnyland.core.events import DomainEvent
-from bunnyland.mechanics.affect import apply_delta, labels_for
-from bunnyland.mechanics.social import bond_between
+from bunnyland.foundation.affect.mechanics import apply_delta, labels_for
+from bunnyland.foundation.social.mechanics import bond_between
 from relics import World
 
 from .components import PerformanceNoiseComponent, TipJarComponent
@@ -71,9 +71,7 @@ class PerformanceConsequence:
             if delta is not None and listener.has_component(AffectComponent):
                 self._shift_mood(listener, delta)
             bond = (
-                bond_between(world, occupant_id, performer_id)
-                if performer_id is not None
-                else None
+                bond_between(world, occupant_id, performer_id) if performer_id is not None else None
             )
             tips += tip_for_listener(bond)
         self._pay_tips(world, performer_id, tips)
@@ -81,9 +79,7 @@ class PerformanceConsequence:
     def _shift_mood(self, listener, delta) -> None:
         affect = listener.get_component(AffectComponent)
         current = apply_delta(affect.current, delta)
-        replace_component(
-            listener, replace(affect, current=current, labels=labels_for(current))
-        )
+        replace_component(listener, replace(affect, current=current, labels=labels_for(current)))
 
     def _pay_tips(self, world: World, performer_id, tips: int) -> None:
         if performer_id is None or tips <= 0 or not world.has_entity(performer_id):

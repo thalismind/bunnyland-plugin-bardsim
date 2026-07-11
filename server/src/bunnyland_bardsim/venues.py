@@ -37,7 +37,7 @@ from bunnyland.core.handlers import (
     rejected,
     require_entity,
 )
-from bunnyland.mechanics.storyteller import IncidentComponent, IncidentStartedEvent
+from bunnyland.foundation.storyteller.mechanics import IncidentComponent, IncidentStartedEvent
 from pydantic.dataclasses import dataclass
 from relics import Component, World
 
