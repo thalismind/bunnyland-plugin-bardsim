@@ -8,8 +8,8 @@ then rewards every present bandmate, so a group draws more renown than a lone bu
 
 from __future__ import annotations
 
-from bunnyland.core.actions import ActionArgument, ActionDefinition
-from bunnyland.core.commands import CommandCost, Lane, SubmittedCommand
+from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffort, effort_cost
+from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import CharacterComponent, IdentityComponent
 from bunnyland.core.events import DomainEvent, EventVisibility
 from bunnyland.core.handlers import (
@@ -140,7 +140,7 @@ FORM_ENSEMBLE_DEF = ActionDefinition(
     title="Form an ensemble",
     description="Band together with another musician under a shared ensemble name.",
     lane=Lane.WORLD,
-    cost=CommandCost(action=1),
+    cost=effort_cost(action=ActionEffort.MAJOR),
     arguments={
         "member_id": ActionArgument(
             title="Bandmate",

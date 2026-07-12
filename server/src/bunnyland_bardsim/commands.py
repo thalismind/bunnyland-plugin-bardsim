@@ -16,8 +16,8 @@ from __future__ import annotations
 from dataclasses import replace
 
 from bunnyland.core import NoiseComponent, spawn_entity
-from bunnyland.core.actions import ActionArgument, ActionDefinition
-from bunnyland.core.commands import CommandCost, Lane, SubmittedCommand
+from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffort, effort_cost
+from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import IdentityComponent
 from bunnyland.core.ecs import replace_component
 from bunnyland.core.events import EventVisibility
@@ -185,7 +185,7 @@ PERFORM_DEF = ActionDefinition(
     title="Perform a song",
     description="Play a song you know on an instrument you are holding.",
     lane=Lane.WORLD,
-    cost=CommandCost(action=1),
+    cost=effort_cost(action=ActionEffort.ROUTINE),
     arguments={
         "item_id": ActionArgument(
             title="Instrument",
@@ -206,8 +206,8 @@ LEARN_DEF = ActionDefinition(
     command_type="learn-song",
     title="Learn a song",
     description="Add a song to your repertoire so you can perform it later.",
-    lane=Lane.WORLD,
-    cost=CommandCost(action=1),
+    lane=Lane.FOCUS,
+    cost=effort_cost(focus=ActionEffort.EXTENDED),
     arguments={
         "song": ActionArgument(
             title="Song",

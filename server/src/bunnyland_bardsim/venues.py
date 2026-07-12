@@ -25,8 +25,8 @@ from bunnyland.core import (
     contents,
     spawn_entity,
 )
-from bunnyland.core.actions import ActionArgument, ActionDefinition
-from bunnyland.core.commands import CommandCost, Lane, SubmittedCommand
+from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffort, effort_cost
+from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import IdentityComponent
 from bunnyland.core.ecs import parse_entity_id, replace_component
 from bunnyland.core.events import DomainEvent, EventVisibility, event_base
@@ -400,7 +400,7 @@ OPEN_VENUE_DEF = ActionDefinition(
     title="Open a venue",
     description="Turn the room you are in into a named performance venue.",
     lane=Lane.WORLD,
-    cost=CommandCost(action=1),
+    cost=effort_cost(action=ActionEffort.MAJOR),
     arguments={
         "name": ActionArgument(
             title="Venue name",
@@ -422,7 +422,7 @@ PERFORM_GIG_DEF = ActionDefinition(
     title="Play a gig",
     description="Perform a known song at a venue to build your reputation.",
     lane=Lane.WORLD,
-    cost=CommandCost(action=1),
+    cost=effort_cost(action=ActionEffort.EXTENDED),
     arguments={
         "item_id": ActionArgument(
             title="Instrument",

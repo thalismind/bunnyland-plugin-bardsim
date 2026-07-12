@@ -12,8 +12,8 @@ from __future__ import annotations
 from dataclasses import replace
 
 from bunnyland.core import spawn_entity
-from bunnyland.core.actions import ActionArgument, ActionDefinition
-from bunnyland.core.commands import CommandCost, Lane, SubmittedCommand
+from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffort, effort_cost
+from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import IdentityComponent
 from bunnyland.core.ecs import replace_component
 from bunnyland.core.events import DomainEvent, EventVisibility
@@ -151,8 +151,8 @@ COMPOSE_SONG_DEF = ActionDefinition(
     command_type="compose-song",
     title="Compose a song",
     description="Write an original song, learn it, and add it to your body of work.",
-    lane=Lane.WORLD,
-    cost=CommandCost(action=1),
+    lane=Lane.FOCUS,
+    cost=effort_cost(focus=ActionEffort.EXTENDED),
     arguments={
         "title": ActionArgument(
             title="Title",
