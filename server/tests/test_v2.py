@@ -16,6 +16,7 @@ from bunnyland.core.ecs import parse_entity_id
 from bunnyland.core.handlers import HandlerContext
 from bunnyland.foundation.persona.mechanics import GoalComponent
 from bunnyland.foundation.storyteller.mechanics import IncidentComponent, IncidentStartedEvent
+from conftest import execute_handler
 
 from bunnyland_bardsim.composing import (
     COMPOSE_RENOWN,
@@ -98,7 +99,7 @@ def _cmd(character_id, command_type, payload=None):
 
 def _run(handler_cls, actor, character, command_type, payload=None, epoch=0):
     ctx = HandlerContext(world=actor.world, epoch=epoch)
-    return handler_cls().execute(ctx, _cmd(character.id, command_type, payload))
+    return execute_handler(handler_cls(), ctx, _cmd(character.id, command_type, payload))
 
 
 def _ghost_id():
@@ -196,8 +197,8 @@ def test_form_ensemble_rejects_invalid_actor():
     actor = WorldActor()
     stray = spawn_entity(actor.world, [IdentityComponent(name="?", kind="character")])
     ctx = HandlerContext(world=actor.world, epoch=0)
-    result = FormEnsembleHandler().execute(
-        ctx, _cmd("bad", "form-ensemble", {"member_id": str(stray.id)})
+    result = execute_handler(
+        FormEnsembleHandler(), ctx, _cmd("bad", "form-ensemble", {"member_id": str(stray.id)})
     )
     assert result.reason == "invalid character id"
 
@@ -285,7 +286,7 @@ def test_open_venue_rejections():
     assert no_room.reason == "there is no room to open as a venue"
 
     ctx = HandlerContext(world=actor.world, epoch=0)
-    bad_actor = OpenVenueHandler().execute(ctx, _cmd("bad", "open-venue", {"name": "X"}))
+    bad_actor = execute_handler(OpenVenueHandler(), ctx, _cmd("bad", "open-venue", {"name": "X"}))
     assert bad_actor.reason == "invalid character id"
 
 
@@ -541,7 +542,9 @@ def test_compose_song_rejections():
     assert known.reason == "you already know that song"
 
     ctx = HandlerContext(world=actor.world, epoch=0)
-    bad_actor = ComposeSongHandler().execute(ctx, _cmd("bad", "compose-song", {"title": "X"}))
+    bad_actor = execute_handler(
+        ComposeSongHandler(), ctx, _cmd("bad", "compose-song", {"title": "X"})
+    )
     assert bad_actor.reason == "invalid character id"
 
 

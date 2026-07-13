@@ -28,15 +28,16 @@ from bunnyland.core import (
 from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffort, effort_cost
 from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import IdentityComponent
-from bunnyland.core.ecs import parse_entity_id, replace_component
+from bunnyland.core.ecs import parse_entity_id
 from bunnyland.core.events import DomainEvent, EventVisibility, event_base
 from bunnyland.core.handlers import (
     HandlerContext,
     HandlerResult,
-    ok,
+    planned,
     rejected,
     require_entity,
 )
+from bunnyland.core.mutations import AddEntity, MutationPlan, SetComponent
 from bunnyland.foundation.storyteller.mechanics import IncidentComponent, IncidentStartedEvent
 from pydantic.dataclasses import dataclass
 from relics import Component, World
@@ -145,8 +146,8 @@ class OpenVenueHandler:
         prestige = max(1, min(MAX_PRESTIGE, prestige))
         if room.has_component(VenueComponent):
             return rejected("this room is already a venue")
-        replace_component(room, VenueComponent(name=name, prestige=prestige))
-        return ok(
+        return planned(
+            MutationPlan((SetComponent(room.id, VenueComponent(name=name, prestige=prestige)),)),
             VenueOpenedEvent(
                 **ctx.event_base(
                     visibility=EventVisibility.ROOM,
@@ -156,7 +157,7 @@ class OpenVenueHandler:
                     venue_name=name,
                     prestige=prestige,
                 )
-            )
+            ),
         )
 
 
@@ -206,39 +207,41 @@ class PerformGigHandler:
         venue = room.get_component(VenueComponent)
         mood = song_mood(song)
         performer_name = _name_of(character)
-        spawn_entity(
-            ctx.world,
-            [
-                NoiseComponent(
-                    loudness=PERFORMANCE_LOUDNESS,
-                    text=song,
-                    source_entity_id=str(item_id),
-                    room_id=str(room.id),
-                    created_at_epoch=ctx.epoch,
-                    expires_at_epoch=ctx.epoch + PERFORMANCE_TTL,
-                ),
-                PerformanceNoiseComponent(
-                    song=song,
-                    mood=mood,
-                    performer_id=str(character_id),
-                    performer_name=performer_name,
-                    room_id=str(room.id),
-                ),
-                GigComponent(
-                    performer_id=str(character_id),
-                    performer_name=performer_name,
-                    song=song,
-                    mood=mood,
-                    venue_id=str(room.id),
-                    venue_name=venue.name,
-                    prestige=venue.prestige,
-                    room_id=str(room.id),
-                ),
-            ],
-        )
+        operations = [
+            AddEntity(
+                (
+                    NoiseComponent(
+                        loudness=PERFORMANCE_LOUDNESS,
+                        text=song,
+                        source_entity_id=str(item_id),
+                        room_id=str(room.id),
+                        created_at_epoch=ctx.epoch,
+                        expires_at_epoch=ctx.epoch + PERFORMANCE_TTL,
+                    ),
+                    PerformanceNoiseComponent(
+                        song=song,
+                        mood=mood,
+                        performer_id=str(character_id),
+                        performer_name=performer_name,
+                        room_id=str(room.id),
+                    ),
+                    GigComponent(
+                        performer_id=str(character_id),
+                        performer_name=performer_name,
+                        song=song,
+                        mood=mood,
+                        venue_id=str(room.id),
+                        venue_name=venue.name,
+                        prestige=venue.prestige,
+                        room_id=str(room.id),
+                    ),
+                )
+            )
+        ]
         if not character.has_component(TipJarComponent):
-            replace_component(character, TipJarComponent())
-        return ok(
+            operations.append(SetComponent(character.id, TipJarComponent()))
+        return planned(
+            MutationPlan(tuple(operations)),
             GigPerformedEvent(
                 **ctx.event_base(
                     visibility=EventVisibility.ROOM,
@@ -250,7 +253,7 @@ class PerformGigHandler:
                     song=song,
                     mood=mood,
                 )
-            )
+            ),
         )
 
 

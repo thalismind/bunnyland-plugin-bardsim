@@ -15,10 +15,11 @@ from bunnyland.core.events import DomainEvent, EventVisibility
 from bunnyland.core.handlers import (
     HandlerContext,
     HandlerResult,
-    ok,
+    planned,
     rejected,
     require_entity,
 )
+from bunnyland.core.mutations import AddEdge, MutationPlan
 from pydantic.dataclasses import dataclass
 from relics import Edge, Entity, EntityId, World
 
@@ -95,9 +96,13 @@ class FormEnsembleHandler:
             return rejected("you need to name the ensemble")
         if are_bandmates(ctx.world, character_id, member_id):
             return rejected("you already share an ensemble")
-        character.add_relationship(BandmateOf(band=band), member_id)
-        member.add_relationship(BandmateOf(band=band), character_id)
-        return ok(
+        return planned(
+            MutationPlan(
+                (
+                    AddEdge(character_id, member_id, BandmateOf(band=band)),
+                    AddEdge(member_id, character_id, BandmateOf(band=band)),
+                )
+            ),
             EnsembleFormedEvent(
                 **ctx.event_base(
                     visibility=EventVisibility.ROOM,
@@ -107,7 +112,7 @@ class FormEnsembleHandler:
                     member_id=str(member_id),
                     band=band,
                 )
-            )
+            ),
         )
 
 

@@ -14,6 +14,7 @@ from bunnyland.core import (
 )
 from bunnyland.core.commands import CommandCost, Lane, build_submitted_command
 from bunnyland.core.handlers import HandlerContext
+from conftest import execute_handler
 
 from bunnyland_bardsim import (
     PerformanceNoiseComponent,
@@ -59,8 +60,10 @@ def test_perform_spawns_an_audible_performance():
     lute = spawn_lute(actor.world)
     _hold(musician, lute)
 
-    result = PerformHandler().execute(
-        _ctx(actor), _cmd(musician.id, "perform", {"item_id": str(lute.id), "song": SONG})
+    result = execute_handler(
+        PerformHandler(),
+        _ctx(actor),
+        _cmd(musician.id, "perform", {"item_id": str(lute.id), "song": SONG}),
     )
 
     assert result.ok
@@ -77,8 +80,10 @@ def test_perform_reports_the_song_mood_on_its_event():
     lute = spawn_lute(actor.world)
     _hold(musician, lute)
 
-    result = PerformHandler().execute(
-        _ctx(actor), _cmd(musician.id, "perform", {"item_id": str(lute.id), "song": SONG})
+    result = execute_handler(
+        PerformHandler(),
+        _ctx(actor),
+        _cmd(musician.id, "perform", {"item_id": str(lute.id), "song": SONG}),
     )
 
     assert result.events[0].mood == "uplifting"
@@ -99,8 +104,10 @@ def test_perform_gives_a_tip_jar_to_a_performer_without_one():
     lute = spawn_lute(actor.world)
     _hold(performer, lute)
 
-    PerformHandler().execute(
-        _ctx(actor), _cmd(performer.id, "perform", {"item_id": str(lute.id), "song": SONG})
+    execute_handler(
+        PerformHandler(),
+        _ctx(actor),
+        _cmd(performer.id, "perform", {"item_id": str(lute.id), "song": SONG}),
     )
 
     assert performer.has_component(TipJarComponent)
@@ -111,8 +118,10 @@ def test_perform_rejects_invalid_character_id():
     lute = spawn_lute(actor.world)
     _hold(musician, lute)
 
-    result = PerformHandler().execute(
-        _ctx(actor), _cmd("???", "perform", {"item_id": str(lute.id), "song": SONG})
+    result = execute_handler(
+        PerformHandler(),
+        _ctx(actor),
+        _cmd("???", "perform", {"item_id": str(lute.id), "song": SONG}),
     )
 
     assert not result.ok
@@ -122,8 +131,10 @@ def test_perform_rejects_invalid_character_id():
 def test_perform_rejects_missing_item():
     actor, _room, musician = _world_with_musician()
 
-    result = PerformHandler().execute(
-        _ctx(actor), _cmd(musician.id, "perform", {"item_id": "entity_9999", "song": SONG})
+    result = execute_handler(
+        PerformHandler(),
+        _ctx(actor),
+        _cmd(musician.id, "perform", {"item_id": "entity_9999", "song": SONG}),
     )
 
     assert not result.ok
@@ -134,8 +145,10 @@ def test_perform_rejects_instrument_not_held():
     actor, room, musician = _world_with_musician()
     lute = spawn_lute(actor.world, room_id=room.id)  # on the floor, not held
 
-    result = PerformHandler().execute(
-        _ctx(actor), _cmd(musician.id, "perform", {"item_id": str(lute.id), "song": SONG})
+    result = execute_handler(
+        PerformHandler(),
+        _ctx(actor),
+        _cmd(musician.id, "perform", {"item_id": str(lute.id), "song": SONG}),
     )
 
     assert not result.ok
@@ -150,8 +163,10 @@ def test_perform_rejects_non_instrument_item():
     )
     _hold(musician, mug)
 
-    result = PerformHandler().execute(
-        _ctx(actor), _cmd(musician.id, "perform", {"item_id": str(mug.id), "song": SONG})
+    result = execute_handler(
+        PerformHandler(),
+        _ctx(actor),
+        _cmd(musician.id, "perform", {"item_id": str(mug.id), "song": SONG}),
     )
 
     assert not result.ok
@@ -163,8 +178,8 @@ def test_perform_rejects_missing_song_argument():
     lute = spawn_lute(actor.world)
     _hold(musician, lute)
 
-    result = PerformHandler().execute(
-        _ctx(actor), _cmd(musician.id, "perform", {"item_id": str(lute.id)})
+    result = execute_handler(
+        PerformHandler(), _ctx(actor), _cmd(musician.id, "perform", {"item_id": str(lute.id)})
     )
 
     assert not result.ok
@@ -176,7 +191,8 @@ def test_perform_rejects_unknown_song():
     lute = spawn_lute(actor.world)
     _hold(musician, lute)
 
-    result = PerformHandler().execute(
+    result = execute_handler(
+        PerformHandler(),
         _ctx(actor),
         _cmd(musician.id, "perform", {"item_id": str(lute.id), "song": "an unlearned tune"}),
     )
@@ -188,8 +204,8 @@ def test_perform_rejects_unknown_song():
 def test_learn_song_adds_to_repertoire():
     actor, _room, musician = _world_with_musician()
 
-    result = LearnSongHandler().execute(
-        _ctx(actor), _cmd(musician.id, "learn-song", {"song": "victory anthem"})
+    result = execute_handler(
+        LearnSongHandler(), _ctx(actor), _cmd(musician.id, "learn-song", {"song": "victory anthem"})
     )
 
     assert result.ok
@@ -204,8 +220,8 @@ def test_learn_song_creates_a_repertoire_when_absent():
     )
     room.add_relationship(Contains(mode=ContainmentMode.ROOM_CONTENT), novice.id)
 
-    result = LearnSongHandler().execute(
-        _ctx(actor), _cmd(novice.id, "learn-song", {"song": "the road home"})
+    result = execute_handler(
+        LearnSongHandler(), _ctx(actor), _cmd(novice.id, "learn-song", {"song": "the road home"})
     )
 
     assert result.ok
@@ -215,8 +231,8 @@ def test_learn_song_creates_a_repertoire_when_absent():
 def test_learn_song_rejects_missing_song():
     actor, _room, musician = _world_with_musician()
 
-    result = LearnSongHandler().execute(
-        _ctx(actor), _cmd(musician.id, "learn-song", {"song": "   "})
+    result = execute_handler(
+        LearnSongHandler(), _ctx(actor), _cmd(musician.id, "learn-song", {"song": "   "})
     )
 
     assert not result.ok
@@ -226,8 +242,8 @@ def test_learn_song_rejects_missing_song():
 def test_learn_song_rejects_already_known_song():
     actor, _room, musician = _world_with_musician()
 
-    result = LearnSongHandler().execute(
-        _ctx(actor), _cmd(musician.id, "learn-song", {"song": SONG})
+    result = execute_handler(
+        LearnSongHandler(), _ctx(actor), _cmd(musician.id, "learn-song", {"song": SONG})
     )
 
     assert not result.ok
@@ -237,8 +253,8 @@ def test_learn_song_rejects_already_known_song():
 def test_learn_song_rejects_invalid_character_id():
     actor, _room, _musician = _world_with_musician()
 
-    result = LearnSongHandler().execute(
-        _ctx(actor), _cmd("???", "learn-song", {"song": "a new tune"})
+    result = execute_handler(
+        LearnSongHandler(), _ctx(actor), _cmd("???", "learn-song", {"song": "a new tune"})
     )
 
     assert not result.ok
@@ -253,8 +269,10 @@ def test_perform_uses_a_fallback_name_without_an_identity():
     lute = spawn_lute(actor.world)
     _hold(faceless, lute)
 
-    PerformHandler().execute(
-        _ctx(actor), _cmd(faceless.id, "perform", {"item_id": str(lute.id), "song": SONG})
+    execute_handler(
+        PerformHandler(),
+        _ctx(actor),
+        _cmd(faceless.id, "perform", {"item_id": str(lute.id), "song": SONG}),
     )
 
     performances = list(
@@ -276,8 +294,10 @@ def test_perform_rejects_when_there_is_no_room():
     lute = spawn_lute(actor.world)
     _hold(roamer, lute)
 
-    result = PerformHandler().execute(
-        _ctx(actor), _cmd(roamer.id, "perform", {"item_id": str(lute.id), "song": SONG})
+    result = execute_handler(
+        PerformHandler(),
+        _ctx(actor),
+        _cmd(roamer.id, "perform", {"item_id": str(lute.id), "song": SONG}),
     )
 
     assert not result.ok

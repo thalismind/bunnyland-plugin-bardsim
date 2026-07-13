@@ -11,24 +11,29 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from bunnyland.core import spawn_entity
 from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffort, effort_cost
 from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import IdentityComponent
-from bunnyland.core.ecs import replace_component
 from bunnyland.core.events import DomainEvent, EventVisibility
 from bunnyland.core.handlers import (
     HandlerContext,
     HandlerResult,
-    ok,
+    planned,
     rejected,
     require_entity,
+)
+from bunnyland.core.mutations import (
+    AddEdge,
+    AddEntity,
+    EntityReference,
+    MutationPlan,
+    SetComponent,
 )
 from pydantic.dataclasses import dataclass
 from relics import Component, Edge, Entity, World
 
 from .components import RepertoireComponent
-from .reputation import grant_renown
+from .connectors import Reputation
 from .songs import song_mood
 from .spatial import room_of
 
@@ -102,33 +107,60 @@ class ComposeSongHandler:
             if character.has_component(IdentityComponent)
             else "someone"
         )
-        composition = spawn_entity(
-            ctx.world,
-            [
-                IdentityComponent(name=title, kind="composition", tags=("bardsim",)),
-                CompositionComponent(
-                    title=title,
-                    mood=mood,
-                    composer_id=str(character_id),
-                    composer_name=composer_name,
-                    created_at_epoch=ctx.epoch,
-                ),
-            ],
+        composition = EntityReference()
+        reputation = (
+            character.get_component(Reputation)
+            if character.has_component(Reputation)
+            else Reputation()
         )
-        character.add_relationship(Composed(created_at_epoch=ctx.epoch), composition.id)
-        replace_component(character, replace(repertoire, songs=(*repertoire.songs, title)))
-        grant_renown(ctx.world, character_id, COMPOSE_RENOWN)
-        return ok(
-            SongComposedEvent(
+        return planned(
+            MutationPlan(
+                (
+                    AddEntity(
+                        (
+                            IdentityComponent(
+                                name=title,
+                                kind="composition",
+                                tags=("bardsim",),
+                            ),
+                            CompositionComponent(
+                                title=title,
+                                mood=mood,
+                                composer_id=str(character_id),
+                                composer_name=composer_name,
+                                created_at_epoch=ctx.epoch,
+                            ),
+                        ),
+                        reference=composition,
+                    ),
+                    AddEdge(
+                        character_id,
+                        composition,
+                        Composed(created_at_epoch=ctx.epoch),
+                    ),
+                    SetComponent(
+                        character_id,
+                        replace(repertoire, songs=(*repertoire.songs, title)),
+                    ),
+                    SetComponent(
+                        character_id,
+                        replace(
+                            reputation,
+                            renown=max(0, reputation.renown + COMPOSE_RENOWN),
+                        ),
+                    ),
+                )
+            ),
+            lambda: SongComposedEvent(
                 **ctx.event_base(
                     visibility=EventVisibility.ROOM,
                     actor_id=str(character_id),
                     room_id=_room_id(ctx, character_id),
-                    target_ids=(str(composition.id),),
+                    target_ids=(str(composition.require()),),
                     title=title,
                     mood=mood,
                 )
-            )
+            ),
         )
 
 

@@ -20,6 +20,7 @@ from bunnyland.core.commands import CommandCost, Lane, build_submitted_command
 from bunnyland.core.ecs import parse_entity_id, replace_component
 from bunnyland.core.handlers import HandlerContext
 from bunnyland.prompts.context import ComponentPromptContext, PromptPerspective
+from conftest import execute_handler
 
 from bunnyland_bardsim.components import PerformanceNoiseComponent, RepertoireComponent
 from bunnyland_bardsim.connectors import external_reputation_bonus
@@ -258,8 +259,9 @@ def test_gig_performer_name_falls_back_when_identity_is_missing():
     lute = spawn_lute(actor.world)
     _hold(faceless, lute)
     ctx = HandlerContext(world=actor.world, epoch=0)
-    OpenVenueHandler().execute(ctx, _cmd(faceless.id, "open-venue", {"name": "The Rest"}))
-    result = PerformGigHandler().execute(
+    execute_handler(OpenVenueHandler(), ctx, _cmd(faceless.id, "open-venue", {"name": "The Rest"}))
+    result = execute_handler(
+        PerformGigHandler(),
         ctx,
         _cmd(faceless.id, "perform-gig", {"item_id": str(lute.id), "song": "a merry harvest jig"}),
     )
@@ -320,10 +322,12 @@ def test_perform_gig_rejects_a_performer_with_no_repertoire_at_all():
     lute = spawn_lute(actor.world)
     _hold(bare, lute)
     ctx = HandlerContext(world=actor.world, epoch=0)
-    OpenVenueHandler().execute(ctx, _cmd(bare.id, "open-venue", {"name": "The Rest"}))
+    execute_handler(OpenVenueHandler(), ctx, _cmd(bare.id, "open-venue", {"name": "The Rest"}))
 
-    result = PerformGigHandler().execute(
-        ctx, _cmd(bare.id, "perform-gig", {"item_id": str(lute.id), "song": "any tune"})
+    result = execute_handler(
+        PerformGigHandler(),
+        ctx,
+        _cmd(bare.id, "perform-gig", {"item_id": str(lute.id), "song": "any tune"}),
     )
     assert result.reason == "you do not know that song"
 

@@ -15,19 +15,19 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from bunnyland.core import NoiseComponent, spawn_entity
+from bunnyland.core import NoiseComponent
 from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffort, effort_cost
 from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import IdentityComponent
-from bunnyland.core.ecs import replace_component
 from bunnyland.core.events import EventVisibility
 from bunnyland.core.handlers import (
     HandlerContext,
     HandlerResult,
-    ok,
+    planned,
     rejected,
     require_entity,
 )
+from bunnyland.core.mutations import AddEntity, MutationPlan, SetComponent
 
 from .components import (
     InstrumentComponent,
@@ -100,9 +100,31 @@ class PerformHandler:
             return rejected("there is no room to perform in")
 
         mood = song_mood(song)
-        self._spawn_performance(ctx, character, str(room.id), item_id, song, mood)
-        self._ensure_tip_jar(character)
-        return ok(
+        operations = [
+            AddEntity(
+                (
+                    NoiseComponent(
+                        loudness=PERFORMANCE_LOUDNESS,
+                        text=song,
+                        source_entity_id=str(item_id),
+                        room_id=str(room.id),
+                        created_at_epoch=ctx.epoch,
+                        expires_at_epoch=ctx.epoch + PERFORMANCE_TTL,
+                    ),
+                    PerformanceNoiseComponent(
+                        song=song,
+                        mood=mood,
+                        performer_id=str(character.id),
+                        performer_name=_name_of(character),
+                        room_id=str(room.id),
+                    ),
+                )
+            )
+        ]
+        if not character.has_component(TipJarComponent):
+            operations.append(SetComponent(character.id, TipJarComponent()))
+        return planned(
+            MutationPlan(tuple(operations)),
             PerformedEvent(
                 **ctx.event_base(
                     visibility=EventVisibility.ROOM,
@@ -113,34 +135,8 @@ class PerformHandler:
                     song=song,
                     mood=mood,
                 )
-            )
+            ),
         )
-
-    def _spawn_performance(self, ctx, character, room_id, item_id, song, mood) -> None:
-        spawn_entity(
-            ctx.world,
-            [
-                NoiseComponent(
-                    loudness=PERFORMANCE_LOUDNESS,
-                    text=song,
-                    source_entity_id=str(item_id),
-                    room_id=room_id,
-                    created_at_epoch=ctx.epoch,
-                    expires_at_epoch=ctx.epoch + PERFORMANCE_TTL,
-                ),
-                PerformanceNoiseComponent(
-                    song=song,
-                    mood=mood,
-                    performer_id=str(character.id),
-                    performer_name=_name_of(character),
-                    room_id=room_id,
-                ),
-            ],
-        )
-
-    def _ensure_tip_jar(self, character) -> None:
-        if not character.has_component(TipJarComponent):
-            replace_component(character, TipJarComponent())
 
 
 class LearnSongHandler:
@@ -167,8 +163,10 @@ class LearnSongHandler:
         )
         if current.knows(song):
             return rejected("you already know that song")
-        replace_component(character, replace(current, songs=(*current.songs, song)))
-        return ok(
+        return planned(
+            MutationPlan(
+                (SetComponent(character.id, replace(current, songs=(*current.songs, song))),)
+            ),
             SongLearnedEvent(
                 **ctx.event_base(
                     visibility=EventVisibility.PRIVATE,
@@ -176,7 +174,7 @@ class LearnSongHandler:
                     room_id=_room_id(ctx, character_id),
                     song=song,
                 )
-            )
+            ),
         )
 
 

@@ -16,6 +16,7 @@ from bunnyland.core.components import AffectComponent, PerceptionComponent
 from bunnyland.core.consequences import HearingConsequence
 from bunnyland.core.handlers import HandlerContext
 from bunnyland.foundation.social.mechanics import adjust_bond
+from conftest import execute_handler
 
 from bunnyland_bardsim import (
     PerformanceConsequence,
@@ -68,7 +69,7 @@ def _perform(actor, performer, lute, song):
         lane=Lane.WORLD,
         payload={"item_id": str(lute.id), "song": song},
     )
-    return PerformHandler().execute(ctx, command)
+    return execute_handler(PerformHandler(), ctx, command)
 
 
 def _stage(song=JIG):
